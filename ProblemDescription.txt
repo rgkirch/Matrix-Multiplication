@@ -1,0 +1,43 @@
+Problem Description
+CS267 Assignment 1: Optimize Matrix Multiplication
+
+Assignment 1: Optimize Matrix Multiplication
+
+Problem statement
+Your task is to optimize matrix multiplication (matmul) code to run fast on a single processor core of XSEDE's Trestles cluster. We consider a special case of matmul: C := C + A*B where A, B, and C are n x n matrices. This can be performed using 2n  floating point operations (n  adds, n multiplies), as in the following pseudocode:
+  for i = 1 to n
+    for j = 1 to n
+      for k = 1 to n
+        C(i,j) = C(i,j) + A(i,k) * B(k,j)
+      end
+    end
+  end
+
+If you are new to optimizing numerical codes, we recommend reading the papers in the references section. There are other formulations of matmul (eg, Strassen) that are mathematically equivalent, but perform asymptotically fewer computations ­ we will not grade submissions that do fewer computations than the 2n algorithm. Once you have finished and are happy with your square_dgemm implementation you should consider this and other optional improvements for further coding practice but they will not be graded for HW1.
+Your code must use double­precision to represent real numbers. A common reference implementation for double­precision matrix multiplication is the dgemm (double­precision general matrix­matrix multiply) routine in the level­3 BLAS. We will compare your implementation with the tuned dgemm implementation available ­ on Trestles , we will compare with the Intel MKL implementation of dgemm. Note that dgemm has a more general interface than square_dgemm ­ an optional part of HW1 encourages you to explore this richer tuning space. You may use any compiler available. We recommend starting with the GNU C compiler (gcc). If you use a compiler other than gcc, you will have to change the provided Makefile, which uses gcc­specific flags. Note that the default compilers, every time you open a new terminal, are PGI ­ you will have to type "module unload pgi" or "module purge" and then "module load gnu"to switch to, eg, GNU compilers. You can type "module list" to see which compiler wrapper you have loaded. You may use C99 features when available. The provided benchmark.c uses C99 features, so you must compile with C99 support ­ for gcc, this means using the flag -std=gnu99 (see the Makefile). Here is the status of C99 functionality in gcc ­ note that C90 (ANSI C) is fully implemented. Besides compiler intrinsic functions and built­ins, your code (dgemm-blocked.c) must only call into the C standard library. You may not use compiler flags that automatically detect dgemm kernels and replace them with BLAS calls, i.e. Intel's -matmul flag. You should try to use your compiler's automatic vectorizer before manually vectorizing. GNU C provides many extensions, which include intrinsics for vector (SIMD) instructions and data alignment. (Other compilers may have different interfaces.) Ideally your compiler injects the appropriate intrinsics into your code automatically (eg, automatic vectorization and/or automatic data alignment). gcc's auto­vectorizer reports diagnostics that may help you identify if manual vectorization is required. To manually vectorize, you must add compiler intrinsics to your code.
+
+Consult your compiler's documentation.
+You may assume that A and B do not alias C; however, A and B may alias each other. It is semantically correct to qualify C (the last argument to square_dgemm) with the C99 restrict keyword. There is a lot online about restrict and pointer­aliasing ­ this is a good article to start with. The matrices are all stored in column­major order, i.e. Ci,j == C(i,j) == C[(i-1)+(j-1)*n], for i=1:n, where n is the number of rows in C. Note that we use 1­based indexing when using mathematical symbols Ci,j and MATLAB index notation C(i,j) , and 0­based indexing when using C index notation C[(i-1)+ (j-1)*n].
+
+We will check correctness by the following componentwise error bound:  |square_dgemm(n,A,B,0) ­ A*B| < eps*n*|A|*|B|.  where eps := 2  = 2.2 * 10  is the machine epsilon. One possible optimization to consider for the multiple tuning parameters in an optimized Matrix Multiplication code is autotuning in order to find the optimal/best available value. Libraries like OSKI and ATLAS have shown that achieving the best performance sometimes can be done most efficiently by  automatic searching over the parameter space. Some papers on this topic can be found on the Berkeley
+
+Benchmarking and Optimization (BeBOP) page
+The target processor on the Trestles compute nodes is a quad 8­core AMD Opteron "Magny­Cours" running at 2.4 GHz (see AMD documentation), yielding 2 double­precision (ie, 64­bit) flops per pipeline * 2 pipelines * 2.4 GHz = 9.6 Gflops/s.
+
+Grading
+Your grade will depend on the performance sustained by your codes on Trestles as a percentage of peak: If your sustained performance is between 0% and 50% you will receive a score between 0 and 75 proportional to your sustained performance (Ex:25% gives a score of 37.5) If your sustained performance is between 50% and 80% you will receive a score between 75 and 100 proportional to your sustained performance (Ex:56% gives a score of 80) If your sustained performance is above 80% you will receive 100 Your submission must be a single C file that starts with the name dgemm Any compiler information, flags and options must be copied to the starting comments of the dgemm submitted file; The default options available in the Makefile will already be present in dgemm_blocked.c Your submission must pass the error bound test and cannot call BLAS for dgemm; any submissions that fail these tests this will receive a grade of 0
+
+Optional:
+These parts are not graded. You should be satisfied with your square_dgemm results before beginning an optional part. Implement Strassen matmul. Consider switching over to the three­nested­loops algorithm when the recursive subproblems are small enough. Support the dgemm interface (ie, rectangular matrices, transposing, scalar multiples). Try float (single­precision). This means you can use 4­way SIMD parallelism on Trestles. Try complex numbers (single­ and double­precision) ­ note that complex numbers are part of C99 and supported in gcc. This forum thread gives advice on vectorizing complex multiplication with the conventional approach ­ but note that there are other algorithms for this operation. Optimize your matmul for the case when the inputs are symmetric. Consider conventional and packed symmetric storage. Run the optimized code on one of the other supercomputers available and check relative performance and
+what optimizations need to change or become more relevant
+
+Source files
+The starting files with their descriptions can be found in the Starting Code folder To download all the files directly to Trestles you can use the following command:  wget http://www.eecs.berkeley.edu/~carazvan/XSEDE2014/XSEDE­hw1.tgz
+
+References
+Goto, K., and van de Geijn, R. A. 2008. Anatomy of High­Performance Matrix Multiplication, ACM
+
+Transactions on Mathematical Software 34, 3, Article 12.  (Note: explains the design decisions for the GotoBLAS dgemm implementation, which also apply to your code.) Chellappa, S., Franchetti, F., and Püschel, M. 2008. How To Write Fast Numerical Code: A Small Introduction, Lecture Notes in Computer Science 5235, 196­259. (Note: how to write C code for modern compilers and memory hierarchies, so that it runs fast. Recommended reading, especially for newcomers to code optimization.) Bilmes, et al. The PHiPAC (Portable High Performance ANSI C) Page for BLAS3 Compatible Fast Matrix Matrix Multiply. (Note: PHiPAC is a code­generating autotuner for matmul that started as a submission for this HW in a previous semester of CS267. Also see ATLAS; both are good examples if you are considering code generation strategies.) Lam, M. S., Rothberg, E. E, and Wolf, M. E. 1991. The Cache Performance and Optimization of Blocked Algorithms, ASPLOS'91, 63­74. (Note: clearly explains cache blocking, supported by with performance models.) Notes on vectorizing with SSE intrinsics and a short video by Brian Van Straalen
+
+Documentation:
+Trestles's computing environment documentation AMD architecture documentation. GCC documentation ­ Trestles's default version is GCC 4.1.2 but GCC 4.6.1 is available also on the machine Intel Intrinsic Guide (scroll down). This Java program has a complete reference of all SIMD intrinsics on Intel architectures. Note that Trestles supports SSE, SSE2, SSE3, and SSE4a (not SSE4) instruction sets. You are also welcome to learn from the source code of state­of­art BLAS implementations such as GotoBLAS and ATLAS. However, you should not reuse those codes in your submission.
